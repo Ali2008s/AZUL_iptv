@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  azul_envato_checker
   screen_brightness_util_windows
   url_launcher_windows
 )

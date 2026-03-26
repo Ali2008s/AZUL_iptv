@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  azul_envato_checker
   url_launcher_linux
 )
 
