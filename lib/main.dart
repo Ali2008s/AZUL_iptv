@@ -20,7 +20,7 @@ import 'presentation/screens/screens.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Wakelock.enable();
+  // await WakelockPlus.enable();
   await GetStorage.init();
   await GetStorage.init("favorites");
   if (showAds) {

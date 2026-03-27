@@ -53,7 +53,7 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
 
   @override
   void initState() {
-    Wakelock.enable();
+    WakelockPlus.enable();
     _videoPlayerController = VlcPlayerController.network(
       widget.link,
       hwAcc: HwAcc.full,
