@@ -48,7 +48,7 @@ dependencies:
 
 
 dependency_overrides:
-  win32: any
+  win32: 5.15.0
 
 dev_dependencies:
   flutter_test:
