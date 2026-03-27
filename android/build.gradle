@@ -14,12 +14,17 @@ subprojects {
 }
 
 subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            if (project.android.namespace == null) {
-                project.android.namespace = project.group
+    def setNamespace = { prj ->
+        if (prj.hasProperty('android')) {
+            if (prj.android.namespace == null) {
+                prj.android.namespace = prj.group
             }
         }
+    }
+    if (project.state.executed) {
+        setNamespace(project)
+    } else {
+        project.afterEvaluate { setNamespace(it) }
     }
 }
 
