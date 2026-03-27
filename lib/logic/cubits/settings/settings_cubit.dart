@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   SettingsCubit() : super(SettingsState("null"));
 
   void getSettingsCode() async {
+    if (kIsWeb) return;
     try {
       String data = await platform.invokeMethod('getData');
       debugPrint("DATA: $data");

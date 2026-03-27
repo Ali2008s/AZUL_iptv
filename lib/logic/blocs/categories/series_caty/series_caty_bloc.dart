@@ -13,7 +13,17 @@ class SeriesCatyBloc extends Bloc<SeriesCatyEvent, SeriesCatyState> {
     on<GetSeriesCategories>((event, emit) async {
       emit(SeriesCatyLoading());
       final result = await api.getCategories("get_series_categories");
-      emit(SeriesCatySuccess(result));
+      final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+      final filteredResult = result.where((caty) {
+        if (!isAdultFilterEnabled) return true;
+        final name = (caty.categoryName ?? "").toLowerCase();
+        return !name.contains('18+') && 
+               !name.contains('+18') && 
+               !name.contains('adult') &&
+               !name.contains('xxx') &&
+               !name.contains('للكبار');
+      }).toList();
+      emit(SeriesCatySuccess(filteredResult));
     });
   }
 }

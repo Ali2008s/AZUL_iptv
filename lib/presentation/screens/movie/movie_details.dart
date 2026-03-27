@@ -159,12 +159,18 @@ class _MovieContentState extends State<MovieContent> {
                                                     "${userAuth.serverInfo!.serverUrl}/movie/${userAuth.userInfo!.username}/${userAuth.userInfo!.password}/${movie.movieData!.streamId}.${movie.movieData!.containerExtension}";
 
                                                 debugPrint("URL: $link");
+
+                                                final watchingState = context.read<WatchingCubit>().state;
+                                                final savedIdx = watchingState.movies.indexWhere((m) => m.streamId == widget.channelMovie.streamId.toString());
+                                                final startAt = savedIdx != -1 ? watchingState.movies[savedIdx].sliderValue.toInt() : 0;
+
                                                 Get.to(() => FullVideoScreen(
                                                           link: link,
                                                           title: movie
                                                                   .movieData!
                                                                   .name ??
                                                               "",
+                                                          startAt: startAt,
                                                         ))!
                                                     .then((slider) {
                                                   debugPrint("DATA: $slider");

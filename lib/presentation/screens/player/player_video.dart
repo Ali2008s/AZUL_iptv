@@ -1,8 +1,15 @@
 part of '../screens.dart';
 
 class StreamPlayerPage extends StatefulWidget {
-  const StreamPlayerPage({super.key, required this.controller});
+  const StreamPlayerPage({
+    super.key,
+    this.controller,
+    this.url,
+    this.isLive = false,
+  });
   final VlcPlayerController? controller;
+  final String? url;
+  final bool isLive;
 
   @override
   State<StreamPlayerPage> createState() => _StreamPlayerPageState();
@@ -10,31 +17,67 @@ class StreamPlayerPage extends StatefulWidget {
 
 class _StreamPlayerPageState extends State<StreamPlayerPage> {
   bool isPlayed = true;
-
   bool showControllersVideo = true;
   late Timer timer;
+  PodPlayerController? _podController;
 
   @override
   void initState() {
     WakelockPlus.enable();
     super.initState();
+    if (kIsWeb && widget.url != null) {
+      _podController = PodPlayerController(
+        playVideoFrom: widget.isLive
+            ? PlayVideoFrom.network(widget.url!) // standard network for live if possible
+            : PlayVideoFrom.network(widget.url!),
+        podPlayerConfig: const PodPlayerConfig(
+          autoPlay: true,
+          isLooping: false,
+          videoQualityPriority: [720, 1080, 360],
+        ),
+      )..initialise();
+    }
+
     timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (showControllersVideo) {
-        setState(() {
-          showControllersVideo = false;
-        });
+        if (mounted) {
+          setState(() {
+            showControllersVideo = false;
+          });
+        }
       }
     });
   }
 
   @override
+  void didUpdateWidget(StreamPlayerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (kIsWeb && oldWidget.url != widget.url && widget.url != null) {
+      _podController?.changeVideo(
+        playVideoFrom: PlayVideoFrom.network(widget.url!),
+      );
+    }
+  }
+
+  @override
   void dispose() {
     timer.cancel();
+    _podController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      if (widget.url == null) {
+        return const Center(child: Text('اختر قناة...', style: TextStyle(color: Colors.grey)));
+      }
+      return PodVideoPlayer(
+        controller: _podController!,
+        alwaysShowProgressBar: false,
+      );
+    }
+
     if (widget.controller == null) {
       return const Center(
         child: Text(

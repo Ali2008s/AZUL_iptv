@@ -6,17 +6,20 @@ class FullVideoScreen extends StatefulWidget {
     required this.link,
     required this.title,
     this.isLive = false,
+    this.startAt,
   });
   final String link;
   final String title;
   final bool isLive;
+  final int? startAt;
 
   @override
   State<FullVideoScreen> createState() => _FullVideoScreenState();
 }
 
 class _FullVideoScreenState extends State<FullVideoScreen> {
-  late VlcPlayerController _videoPlayerController;
+  VlcPlayerController? _videoPlayerController;
+  PodPlayerController? _podController;
   bool isPlayed = true;
   bool progress = true;
   bool showControllersVideo = true;
@@ -27,11 +30,13 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
   double _currentVolume = 0.0;
   double _currentBright = 0.0;
   late Timer timer;
+  bool _hasSeekedToStart = false;
 
   final ScreenBrightnessUtil _screenBrightnessUtil = ScreenBrightnessUtil();
 
   _settingPage() async {
     try {
+      if (kIsWeb) return;
       double brightness = await _screenBrightnessUtil.getBrightness();
       if (brightness == -1) {
         debugPrint("Oops... something wrong!");
@@ -54,41 +59,67 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
   @override
   void initState() {
     WakelockPlus.enable();
-    _videoPlayerController = VlcPlayerController.network(
-      widget.link,
-      hwAcc: HwAcc.full,
-      autoPlay: true,
-      autoInitialize: true,
-      options: VlcPlayerOptions(),
-    );
-
     super.initState();
-    _videoPlayerController.addListener(listener);
+    if (kIsWeb) {
+      _podController = PodPlayerController(
+        playVideoFrom: PlayVideoFrom.network(widget.link),
+        podPlayerConfig: PodPlayerConfig(
+          autoPlay: true,
+          isLooping: false,
+        ),
+      )..initialise().then((_) {
+          if (mounted) setState(() => progress = false);
+        });
+    } else {
+      _videoPlayerController = VlcPlayerController.network(
+        widget.link,
+        hwAcc: HwAcc.auto,
+        autoPlay: true,
+        autoInitialize: true,
+        options: VlcPlayerOptions(
+          advanced: VlcAdvancedOptions([
+            VlcAdvancedOptions.networkCaching(2000),
+          ]),
+          http: VlcHttpOptions([
+            VlcHttpOptions.httpUserAgent("Azul IPTV/1.0"),
+          ]),
+        ),
+      );
+      _videoPlayerController!.addListener(listener);
+    }
+
     _settingPage();
 
     timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (showControllersVideo) {
-        setState(() {
-          showControllersVideo = false;
-        });
+        if (mounted) {
+          setState(() {
+            showControllersVideo = false;
+          });
+        }
       }
     });
   }
 
   void listener() async {
-    if (!mounted) return;
+    if (!mounted || kIsWeb) return;
 
     if (progress) {
-      if (_videoPlayerController.value.isPlaying) {
+      if (_videoPlayerController!.value.isPlaying) {
         setState(() {
           progress = false;
         });
       }
     }
 
-    if (_videoPlayerController.value.isInitialized) {
-      var oPosition = _videoPlayerController.value.position;
-      var oDuration = _videoPlayerController.value.duration;
+    if (_videoPlayerController!.value.isInitialized) {
+      var oPosition = _videoPlayerController!.value.position;
+      var oDuration = _videoPlayerController!.value.duration;
+
+      if (widget.startAt != null && widget.startAt! > 0 && !_hasSeekedToStart && oDuration.inSeconds > 0) {
+        _hasSeekedToStart = true;
+        await _videoPlayerController!.setTime(widget.startAt! * 1000);
+      }
 
       if (oDuration.inHours == 0) {
         var strPosition = oPosition.toString().split('.')[0];
@@ -106,25 +137,41 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
   }
 
   void _onSliderPositionChanged(double progress) {
-    setState(() {
-      sliderValue = progress.floor().toDouble();
-    });
-    //convert to Milliseconds since VLC requires MS to set time
-    _videoPlayerController.setTime(sliderValue.toInt() * 1000);
+    if (kIsWeb) {
+      _podController?.videoSeekTo(Duration(seconds: progress.toInt()));
+    } else {
+      setState(() {
+        sliderValue = progress.floor().toDouble();
+      });
+      _videoPlayerController!.setTime(sliderValue.toInt() * 1000);
+    }
   }
 
   @override
-  void dispose() async {
-    super.dispose();
-    await _videoPlayerController.stopRendererScanning();
-    await _videoPlayerController.dispose();
+  void dispose() {
     timer.cancel();
-    VolumeController().removeListener();
+    if (!kIsWeb) {
+      _videoPlayerController?.stopRendererScanning();
+      _videoPlayerController?.dispose();
+      VolumeController().removeListener();
+    }
+    _podController?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("SIZE: ${MediaQuery.of(context).size.width}");
+    if (kIsWeb) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: PodVideoPlayer(
+            controller: _podController!,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -135,9 +182,8 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
             height: getSize(context).height,
             color: Colors.black,
             child: VlcPlayer(
-              controller: _videoPlayerController,
+              controller: _videoPlayerController!,
               aspectRatio: 16 / 9,
-              virtualDisplay: true,
               placeholder: const SizedBox(),
             ),
           ),
@@ -148,7 +194,6 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
               color: kColorPrimary,
             )),
 
-          ///Controllers
           GestureDetector(
             onTap: () {
               setState(() {
@@ -168,7 +213,6 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ///Back & Title
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
@@ -183,34 +227,32 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                                               ? null
                                               : [
                                                   sliderValue,
-                                                  _videoPlayerController
+                                                  _videoPlayerController!
                                                       .value.duration.inSeconds
                                                       .toDouble()
                                                 ]);
                                     });
                                   },
                                   icon: Icon(
-                                    FontAwesomeIcons.chevronLeft,
+                                    FontAwesomeIcons.chevronRight,
                                     size: 19.sp,
                                   ),
                                 ),
                                 const SizedBox(width: 5),
                                 Expanded(
-                                  child: Text(
-                                    widget.title,
-                                    maxLines: 1,
-                                    style: Get.textTheme.labelLarge!.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18.sp,
+                                    child: Text(
+                                      widget.title,
+                                      maxLines: 1,
+                                      style: Get.textTheme.labelLarge!.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18.sp,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-
-                            ///Slider & Play/Pause
-                            if (!progress && !widget.isLive)
+                                ],
+                              ),
+                              if (!progress && !widget.isLive)
                               Align(
                                 alignment: Alignment.bottomCenter,
                                 child: Row(
@@ -223,7 +265,7 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                                         min: 0.0,
                                         max: (!validPosition)
                                             ? 1.0
-                                            : _videoPlayerController
+                                            : _videoPlayerController!
                                                 .value.duration.inSeconds
                                                 .toDouble(),
                                         onChanged: validPosition
@@ -248,8 +290,6 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
           ),
 
           if (!progress && showControllersVideo)
-
-            ///Controllers Light, Lock...
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -281,10 +321,10 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                     onPressed: () {
                       setState(() {
                         if (isPlayed) {
-                          _videoPlayerController.pause();
+                          _videoPlayerController!.pause();
                           isPlayed = false;
                         } else {
-                          _videoPlayerController.play();
+                          _videoPlayerController!.play();
                           isPlayed = true;
                         }
                       });

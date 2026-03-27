@@ -1,12 +1,16 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:intl/intl.dart';
 import 'package:mbark_iptv/repository/api/api.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'helpers/helpers.dart';
+import 'helpers/translations.dart';
 import 'logic/blocs/auth/auth_bloc.dart';
 import 'logic/blocs/categories/channels/channels_bloc.dart';
 import 'logic/blocs/categories/live_caty/live_caty_bloc.dart';
@@ -20,6 +24,7 @@ import 'presentation/screens/screens.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Intl.defaultLocale = 'ar';
   // await WakelockPlus.enable();
   await GetStorage.init();
   await GetStorage.init("favorites");
@@ -105,13 +110,28 @@ class _MyAppState extends State<MyApp> {
               theme: MyThemApp.themeData(context),
               debugShowCheckedModeBanner: false,
               initialRoute: "/",
+              translations: AppTranslations(),
+              locale: const Locale('ar'),
+              fallbackLocale: const Locale('ar'),
+              supportedLocales: const [Locale('ar')],
+              builder: (context, child) {
+                return Directionality(
+                  textDirection: ui.TextDirection.ltr,
+                  child: child!,
+                );
+              },
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
               getPages: [
                 GetPage(name: screenSplash, page: () => const SplashScreen()),
                 GetPage(name: screenWelcome, page: () => const WelcomeScreen()),
                 GetPage(name: screenIntro, page: () => const IntroScreen()),
                 GetPage(
                     name: screenLiveCategories,
-                    page: () => const LiveCategoriesScreen()),
+                    page: () => const LiveChannelsScreen(catyId: "")),
                 GetPage(
                     name: screenRegister, page: () => const RegisterScreen()),
                 GetPage(
@@ -120,10 +140,10 @@ class _MyAppState extends State<MyApp> {
                     name: screenRegisterTv, page: () => const RegisterUserTv()),
                 GetPage(
                     name: screenMovieCategories,
-                    page: () => const MovieCategoriesScreen()),
+                    page: () => const MovieChannels(catyId: "")),
                 GetPage(
                     name: screenSeriesCategories,
-                    page: () => const SeriesCategoriesScreen()),
+                    page: () => const SeriesChannels(catyId: "")),
                 GetPage(
                     name: screenSettings, page: () => const SettingsScreen()),
                 GetPage(

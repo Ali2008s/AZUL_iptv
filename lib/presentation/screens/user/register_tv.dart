@@ -123,8 +123,8 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                       } else if (state is AuthFailed) {
                         showWarningToast(
                           context,
-                          'Login failed.',
-                          'Please check your IPTV credentials and try again.',
+                          'ما كدرت اطب.',
+                          'تأكد من اليوزر والرمز مالتك وجرب مرة ثانية.',
                         );
                         debugPrint(state.message);
                       }
@@ -166,7 +166,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                     children: [
                                       const SizedBox(height: 15),
                                       CardInputTv(
-                                        label: "username",
+                                        label: "username".tr,
                                         controller: _username,
                                         icon: FontAwesomeIcons.solidUser,
                                         focusNode: focusNode0,
@@ -181,7 +181,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                       ),
                                       const SizedBox(height: 10),
                                       CardInputTv(
-                                        label: "password",
+                                        label: "password".tr,
                                         controller: _password,
                                         icon: FontAwesomeIcons.lock,
                                         focusNode: focusNode1,
@@ -195,7 +195,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                       ),
                                       const SizedBox(height: 15),
                                       CardInputTv(
-                                        label: "http://example.ex:8080",
+                                        label: "server_url".tr,
                                         controller: _domain,
                                         icon: FontAwesomeIcons.lock,
                                         focusNode: focusNode2,
@@ -217,7 +217,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                           onTap: () {
                                             _login();
                                           },
-                                          title: 'Login',
+                                          title: 'login'.tr,
                                         ),
                                       ),
                                     ],

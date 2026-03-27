@@ -14,7 +14,17 @@ class LiveCatyBloc extends Bloc<LiveCatyEvent, LiveCatyState> {
     on<GetLiveCategories>((event, emit) async {
       emit(LiveCatyLoading());
       final result = await api.getCategories("get_live_categories");
-      emit(LiveCatySuccess(result));
+      final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+      final filteredResult = result.where((caty) {
+        if (!isAdultFilterEnabled) return true;
+        final name = (caty.categoryName ?? "").toLowerCase();
+        return !name.contains('18+') && 
+               !name.contains('+18') && 
+               !name.contains('adult') &&
+               !name.contains('xxx') &&
+               !name.contains('للكبار');
+      }).toList();
+      emit(LiveCatySuccess(filteredResult));
     });
   }
 }

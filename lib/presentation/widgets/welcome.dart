@@ -41,7 +41,7 @@ class AppBarWelcome extends StatelessWidget {
                       style: Get.textTheme.titleSmall,
                     ),
                     Text(
-                      "Expiration: ${expirationDate(userInfo!.expDate)}",
+                      "ينتهي بـ: ${expirationDate(userInfo!.expDate)}",
                       style: Get.textTheme.titleSmall!.copyWith(
                         color: kColorHint,
                       ),

@@ -1,15 +1,18 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../helpers/helpers.dart';
 
-String kBanner = Platform.isAndroid
-    ? "ca-app-pub-4228099303451066/1365018520" //TODO: Banner Android
-    : "ca-app-pub-3940256099942544/2934735716"; //TODO: Banner IOS
-String kInterstitial = Platform.isAndroid
-    ? "ca-app-pub-4228099303451066/2843404117" //TODO: Interstitial Android
-    : "ca-app-pub-3940256099942544/4411468910"; //TODO: Interstitial IOS
+String kBanner = kIsWeb
+    ? ""
+    : (defaultTargetPlatform == TargetPlatform.android)
+        ? "ca-app-pub-4228099303451066/1365018520" //TODO: Banner Android
+        : "ca-app-pub-3940256099942544/2934735716"; //TODO: Banner IOS
+String kInterstitial = kIsWeb
+    ? ""
+    : (defaultTargetPlatform == TargetPlatform.android)
+        ? "ca-app-pub-4228099303451066/2843404117" //TODO: Interstitial Android
+        : "ca-app-pub-3940256099942544/4411468910"; //TODO: Interstitial IOS
 
 ///
 ///

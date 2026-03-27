@@ -11,11 +11,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^10.7.0
   cached_network_image: ^3.4.1
   responsive_sizer: ^3.3.1
+  flutter_launcher_icons: ^0.14.4
   awesome_snackbar_content: ^0.1.8
   google_fonts: ^7.0.0
   flutter_rating_bar: ^4.0.1
@@ -23,6 +26,12 @@ dependencies:
   filling_slider: ^0.0.3
   loading_animation_widget: ^1.2.1
   wakelock_plus: ^1.2.11
+  
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
 
 
   #Logic
@@ -45,6 +54,8 @@ dependencies:
   #Http
   dio: ^5.6.0
   google_mobile_ads: ^5.1.0
+  flutter_windowmanager: ^0.2.0
+  simple_pip_mode: ^1.1.0
 
 
 dependency_overrides:

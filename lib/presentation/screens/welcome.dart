@@ -8,20 +8,21 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  late InterstitialAd _interstitialAd;
-  _loadIntel() async {
-    if (!showAds) {
-      return false;
-    }
+  InterstitialAd? _interstitialAd;
+  bool _isAdLoaded = false;
+
+  Future<void> _loadIntel() async {
+    if (!showAds) return;
     InterstitialAd.load(
         adUnitId: kInterstitial,
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
-            debugPrint("Ads is Loaded");
             _interstitialAd = ad;
+            _isAdLoaded = true;
           },
           onAdFailedToLoad: (LoadAdError error) {
+            _isAdLoaded = false;
             debugPrint('InterstitialAd failed to load: $error');
           },
         ));
@@ -33,6 +34,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     context.read<WatchingCubit>().initialData();
     _loadIntel();
     super.initState();
+  }
+
+  Future<void> _onNavigate(String route) async {
+    await Get.toNamed(route);
+    if (showAds && _isAdLoaded && _interstitialAd != null) {
+      debugPrint("show interstitial");
+      await _interstitialAd!.show();
+      await _loadIntel();
+    }
   }
 
   @override
@@ -52,88 +62,71 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
                   children: [
+                    // ── LIVE TV ──────────────────────────────────────
                     Expanded(
                       child: BlocBuilder<LiveCatyBloc, LiveCatyState>(
                         builder: (context, state) {
+                          final sub = state is LiveCatySuccess
+                              ? "${state.categories.length} قناة"
+                              : "";
                           if (state is LiveCatyLoading) {
                             return const Center(
-                              child: CircularProgressIndicator(),
-                            );
+                                child: CircularProgressIndicator());
                           }
-                          if (state is LiveCatySuccess) {
-                            return CardWelcomeTv(
-                              title: "LIVE TV",
-                              autoFocus: true,
-                              subTitle: "${state.categories.length} Channels",
-                              icon: kIconLive,
-                              onTap: () {
-                                Get.toNamed(screenLiveCategories)!
-                                    .then((value) async {
-                                  debugPrint("show interstitial");
-                                  _interstitialAd.show();
-                                  await _loadIntel();
-                                });
-                              },
-                            );
-                          }
-
-                          return const Text('error live caty');
+                          return CardWelcomeTv(
+                            title: "live_tv".tr,
+                            autoFocus: true,
+                            subTitle: sub,
+                            icon: kIconLive,
+                            onTap: () => _onNavigate(screenLiveCategories),
+                          );
                         },
                       ),
                     ),
                     SizedBox(width: 2.w),
+                    // ── MOVIES ───────────────────────────────────────
                     Expanded(
                       child: BlocBuilder<MovieCatyBloc, MovieCatyState>(
                         builder: (context, state) {
+                          final sub = state is MovieCatySuccess
+                              ? "${state.categories.length} فيلم"
+                              : "";
                           if (state is MovieCatyLoading) {
                             return const Center(
                                 child: CircularProgressIndicator());
-                          } else if (state is MovieCatySuccess) {
-                            return CardWelcomeTv(
-                              title: "Movies",
-                              subTitle: "${state.categories.length} Channels",
-                              icon: kIconMovies,
-                              onTap: () {
-                                Get.toNamed(screenMovieCategories)!
-                                    .then((value) async {
-                                  await _interstitialAd.show();
-                                  await _loadIntel();
-                                });
-                              },
-                            );
                           }
-
-                          return const Text('error movie caty');
+                          return CardWelcomeTv(
+                            title: "movies".tr,
+                            subTitle: sub,
+                            icon: kIconMovies,
+                            onTap: () => _onNavigate(screenMovieCategories),
+                          );
                         },
                       ),
                     ),
                     SizedBox(width: 2.w),
+                    // ── SERIES ───────────────────────────────────────
                     Expanded(
                       child: BlocBuilder<SeriesCatyBloc, SeriesCatyState>(
                         builder: (context, state) {
+                          final sub = state is SeriesCatySuccess
+                              ? "${state.categories.length} مسلسل"
+                              : "";
                           if (state is SeriesCatyLoading) {
                             return const Center(
                                 child: CircularProgressIndicator());
-                          } else if (state is SeriesCatySuccess) {
-                            return CardWelcomeTv(
-                              title: "Series",
-                              subTitle: "${state.categories.length} Channels",
-                              icon: kIconSeries,
-                              onTap: () {
-                                Get.toNamed(screenSeriesCategories)!
-                                    .then((value) async {
-                                  await _interstitialAd.show();
-                                  await _loadIntel();
-                                });
-                              },
-                            );
                           }
-
-                          return const Text('could not load series');
+                          return CardWelcomeTv(
+                            title: "series".tr,
+                            subTitle: sub,
+                            icon: kIconSeries,
+                            onTap: () => _onNavigate(screenSeriesCategories),
+                          );
                         },
                       ),
                     ),
                     SizedBox(width: 2.w),
+                    // ── SIDE BUTTONS ─────────────────────────────────
                     SizedBox(
                       width: 20.w,
                       child: Column(
@@ -141,25 +134,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           CardWelcomeSetting(
-                            title: 'Catch up',
+                            title: 'الأرشيف',
                             icon: FontAwesomeIcons.rotate,
-                            onTap: () {
-                              Get.toNamed(screenCatchUp);
-                            },
+                            onTap: () => Get.toNamed(screenCatchUp),
                           ),
                           CardWelcomeSetting(
-                            title: 'Favourites',
+                            title: 'favorites'.tr,
                             icon: FontAwesomeIcons.heart,
-                            onTap: () {
-                              Get.toNamed(screenFavourite);
-                            },
+                            onTap: () => Get.toNamed(screenFavourite),
                           ),
                           CardWelcomeSetting(
-                            title: 'Settings',
+                            title: 'settings'.tr,
                             icon: FontAwesomeIcons.gear,
-                            onTap: () {
-                              Get.toNamed(screenSettings);
-                            },
+                            onTap: () => Get.toNamed(screenSettings),
                           ),
                         ],
                       ),
@@ -172,7 +159,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'By using this application, you agree to the',
+                  'باستخدامك للتطبيق، انت موافق على ',
                   style: Get.textTheme.titleSmall!.copyWith(
                     fontSize: 12.sp,
                     color: Colors.grey,
@@ -183,7 +170,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     await launchUrlString(kPrivacy);
                   },
                   child: Text(
-                    ' Terms of Services.',
+                    ' شروط الخدمة.',
                     style: Get.textTheme.titleSmall!.copyWith(
                       fontSize: 12.sp,
                       color: Colors.blue,

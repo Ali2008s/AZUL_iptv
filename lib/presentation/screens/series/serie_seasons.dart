@@ -91,9 +91,15 @@ class _SerieSeasonsState extends State<SerieSeasons> {
                                       "${userAuth.serverInfo!.serverUrl}/series/${userAuth.userInfo!.username}/${userAuth.userInfo!.password}/${model!.id}.${model.containerExtension}";
 
                                   debugPrint("Link: $link");
+
+                                  final watchingState = context.read<WatchingCubit>().state;
+                                  final savedIdx = watchingState.series.indexWhere((m) => m.streamId == model.id.toString());
+                                  final startAt = savedIdx != -1 ? watchingState.series[savedIdx].sliderValue.toInt() : 0;
+
                                   Get.to(() => FullVideoScreen(
                                             link: link,
                                             title: model.title ?? "",
+                                            startAt: startAt,
                                           ))!
                                       .then((slider) {
                                     debugPrint("DATA: $slider");

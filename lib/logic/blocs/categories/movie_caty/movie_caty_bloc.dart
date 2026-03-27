@@ -14,7 +14,17 @@ class MovieCatyBloc extends Bloc<MovieCatyEvent, MovieCatyState> {
     on<GetMovieCategories>((event, emit) async {
       emit(MovieCatyLoading());
       final result = await api.getCategories("get_vod_categories");
-      emit(MovieCatySuccess(result));
+      final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+      final filteredResult = result.where((caty) {
+        if (!isAdultFilterEnabled) return true;
+        final name = (caty.categoryName ?? "").toLowerCase();
+        return !name.contains('18+') && 
+               !name.contains('+18') && 
+               !name.contains('adult') &&
+               !name.contains('xxx') &&
+               !name.contains('للكبار');
+      }).toList();
+      emit(MovieCatySuccess(filteredResult));
     });
   }
 }

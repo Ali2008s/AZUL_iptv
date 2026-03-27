@@ -439,51 +439,71 @@ class CardLiveItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       focusColor: kColorFocus,
-      borderRadius: BorderRadius.circular(10),
-      child: Ink(
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: kColorCardLight,
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected ? Border.all(color: Colors.yellow) : null,
+          color: isSelected
+              ? kColorPrimary.withOpacity(0.25)
+              : kColorCardLight,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected
+              ? Border.all(color: kColorPrimary, width: 1.5)
+              : Border.all(color: Colors.white10, width: 1),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Row(
           children: [
-            image != null && !isSelected
-                ? CachedNetworkImage(
-                    imageUrl: image ?? "",
-                    width: 9.w,
-                    errorWidget: (_, i, e) {
-                      return Icon(
+            // Channel logo / icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: image != null && !isSelected
+                  ? CachedNetworkImage(
+                      imageUrl: image ?? "",
+                      fit: BoxFit.contain,
+                      errorWidget: (_, i, e) => Icon(
                         FontAwesomeIcons.tv,
-                        size: isSelected ? 18.sp : 16.sp,
-                        color: Colors.white,
-                      );
-                    },
-                  )
-                : Icon(
-                    isSelected ? FontAwesomeIcons.play : FontAwesomeIcons.tv,
-                    size: isSelected ? 18.sp : 16.sp,
-                    color: Colors.white,
-                  ),
-            const SizedBox(width: 13),
+                        size: 16.sp,
+                        color: Colors.white54,
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        isSelected ? FontAwesomeIcons.play : FontAwesomeIcons.tv,
+                        size: 16.sp,
+                        color: isSelected ? kColorPrimary : Colors.white54,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            // Channel name
             Expanded(
               child: Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Get.textTheme.headlineSmall!.copyWith(
-                  color: Colors.white,
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontWeight:
+                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14.sp,
                 ),
               ),
             ),
+            // Expand icon when selected
             if (isSelected && link != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
+                padding: const EdgeInsets.only(left: 6),
                 child: Icon(
                   FontAwesomeIcons.expand,
-                  size: 18.sp,
-                  color: isSelected ? Colors.yellow : null,
+                  size: 14.sp,
+                  color: kColorPrimary,
                 ),
               ),
           ],

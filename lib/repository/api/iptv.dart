@@ -52,14 +52,18 @@ class IpTvApi {
 
       var url = "${user.serverInfo!.serverUrl}/player_api.php";
 
+      final queryParams = {
+        "password": user.userInfo!.password,
+        "username": user.userInfo!.username,
+        "action": "get_live_streams",
+      };
+      if (catyId.isNotEmpty) {
+        queryParams["category_id"] = catyId;
+      }
+
       Response<List<dynamic>> response = await _dio.get(
         url,
-        queryParameters: {
-          "password": user.userInfo!.password,
-          "username": user.userInfo!.username,
-          "action": "get_live_streams",
-          "category_id": catyId
-        },
+        queryParameters: queryParams,
       );
       debugPrint("URL: ${response.realUri}");
 
@@ -68,7 +72,16 @@ class IpTvApi {
 
         debugPrint("SIZE: ${json.length}");
 
-        final list = json.map((e) => ChannelLive.fromJson(e)).toList();
+        final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+        final list = json.map((e) => ChannelLive.fromJson(e)).where((c) {
+          if (!isAdultFilterEnabled) return true;
+          final n = (c.name ?? "").toLowerCase();
+          return !n.contains('18+') && 
+                 !n.contains('+18') && 
+                 !n.contains('adult') &&
+                 !n.contains('xxx') &&
+                 !n.contains('للكبار');
+        }).toList();
         //TODO: save list to locale
 
         return list;
@@ -93,20 +106,33 @@ class IpTvApi {
 
       var url = "${user.serverInfo!.serverUrl}/player_api.php";
 
+      final queryParams = {
+        "password": user.userInfo!.password,
+        "username": user.userInfo!.username,
+        "action": "get_vod_streams",
+      };
+      if (catyId.isNotEmpty) {
+        queryParams["category_id"] = catyId;
+      }
+
       Response<String> response = await _dio.get(
         url,
-        queryParameters: {
-          "password": user.userInfo!.password,
-          "username": user.userInfo!.username,
-          "action": "get_vod_streams",
-          "category_id": catyId
-        },
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> json = jsonDecode(response.data ?? "[]");
 
-        final list = json.map((e) => ChannelMovie.fromJson(e)).toList();
+        final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+        final list = json.map((e) => ChannelMovie.fromJson(e)).where((c) {
+          if (!isAdultFilterEnabled) return true;
+          final n = (c.name ?? "").toLowerCase();
+          return !n.contains('18+') && 
+                 !n.contains('+18') && 
+                 !n.contains('adult') &&
+                 !n.contains('xxx') &&
+                 !n.contains('للكبار');
+        }).toList();
         //TODO: save list to locale
 
         return list;
@@ -131,20 +157,33 @@ class IpTvApi {
 
       var url = "${user.serverInfo!.serverUrl}/player_api.php";
 
+      final queryParams = {
+        "password": user.userInfo!.password,
+        "username": user.userInfo!.username,
+        "action": "get_series",
+      };
+      if (catyId.isNotEmpty) {
+        queryParams["category_id"] = catyId;
+      }
+
       Response<String> response = await _dio.get(
         url,
-        queryParameters: {
-          "password": user.userInfo!.password,
-          "username": user.userInfo!.username,
-          "action": "get_series",
-          "category_id": catyId
-        },
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> json = jsonDecode(response.data ?? "[]");
 
-        final list = json.map((e) => ChannelSerie.fromJson(e)).toList();
+        final isAdultFilterEnabled = LocaleApi.getAdultFilter();
+        final list = json.map((e) => ChannelSerie.fromJson(e)).where((c) {
+          if (!isAdultFilterEnabled) return true;
+          final n = (c.name ?? "").toLowerCase();
+          return !n.contains('18+') && 
+                 !n.contains('+18') && 
+                 !n.contains('adult') &&
+                 !n.contains('xxx') &&
+                 !n.contains('للكبار');
+        }).toList();
         //TODO: save list to locale
 
         return list;

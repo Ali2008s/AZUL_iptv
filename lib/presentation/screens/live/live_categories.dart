@@ -12,10 +12,10 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
   bool _hideButton = true;
   String keySearch = "";
 
-  late InterstitialAd _interstitialAd;
+  InterstitialAd? _interstitialAd;
   _loadIntel() async {
     if (!showAds) {
-      return false;
+      return;
     }
     InterstitialAd.load(
         adUnitId: kInterstitial,
@@ -60,24 +60,6 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: Visibility(
-        visible: !_hideButton,
-        child: FloatingActionButton(
-          onPressed: () {
-            setState(() {
-              _hideButtonController.animateTo(0,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.ease);
-              _hideButton = true;
-            });
-          },
-          backgroundColor: kColorPrimaryDark,
-          child: const Icon(
-            FontAwesomeIcons.chevronUp,
-            color: Colors.white,
-          ),
-        ),
-      ),
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -85,84 +67,134 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
             width: 100.w,
             height: 100.h,
             decoration: kDecorBackground,
-            // padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10),
-            child: NestedScrollView(
-              controller: _hideButtonController,
-              headerSliverBuilder: (_, ch) {
-                return [
-                  SliverAppBar(
-                    automaticallyImplyLeading: false,
-                    elevation: 0,
-                    backgroundColor: Colors.transparent,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: AppBarLive(
-                        onSearch: (String value) {
-                          setState(() {
-                            keySearch = value.toLowerCase();
-                          });
-                          debugPrint("search :$keySearch");
-                        },
+            child: Column(
+              children: [
+                // ─── AppBar ───────────────────────────────────────────────
+                Padding(
+                  padding: EdgeInsets.only(
+                      top: 2.h, left: 16, right: 16, bottom: 8),
+                  child: Row(
+                    children: [
+                      // Back button
+                      InkWell(
+                        onTap: () => Get.back(),
+                        focusColor: kColorFocus,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: kColorCardLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(FontAwesomeIcons.chevronRight,
+                              color: Colors.white, size: 16),
+                        ),
                       ),
-                    ),
-                  ),
-                ];
-              },
-              body: BlocBuilder<LiveCatyBloc, LiveCatyState>(
-                builder: (context, state) {
-                  if (state is LiveCatyLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is LiveCatySuccess) {
-                    final categories = state.categories;
-
-                    List<CategoryModel> searchCaty = categories
-                        .where((element) => element.categoryName!
-                            .toLowerCase()
-                            .contains(keySearch))
-                        .toList();
-
-                    return GridView.builder(
-                      padding: const EdgeInsets.only(
-                        left: 10,
-                        right: 10,
-                        top: 0,
-                        bottom: 80,
+                      const SizedBox(width: 14),
+                      Text(
+                        "البث المباشر",
+                        style: Get.textTheme.headlineMedium!.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      itemCount: keySearch.isNotEmpty
-                          ? searchCaty.length
-                          : categories.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 4.8,
-                      ),
-                      itemBuilder: (_, i) {
-                        final model = keySearch.isNotEmpty
-                            ? searchCaty[i]
-                            : categories[i];
-
-                        return CardLiveItem(
-                          title: model.categoryName ?? "",
-                          onTap: () {
-                            /// OPEN Channels
-                            Get.to(() => LiveChannelsScreen(
-                                    catyId: model.categoryId ?? ''))!
-                                .then((value) async {
-                              await _interstitialAd.show();
-                              await _loadIntel();
+                      const Spacer(),
+                      // Search bar
+                      SizedBox(
+                        width: 32.w,
+                        height: 40,
+                        child: TextField(
+                          onChanged: (value) {
+                            setState(() {
+                              keySearch = value.toLowerCase();
                             });
                           },
-                        );
-                      },
-                    );
-                  }
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: "البحث في الفئات",
+                            hintStyle:
+                                const TextStyle(color: Colors.white54),
+                            prefixIcon: const Icon(
+                                FontAwesomeIcons.magnifyingGlass,
+                                color: Colors.white54,
+                                size: 14),
+                            filled: true,
+                            fillColor: kColorCardLight,
+                            contentPadding: EdgeInsets.zero,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // ─── Body ─────────────────────────────────────────────────
+                Expanded(
+                  child: BlocBuilder<LiveCatyBloc, LiveCatyState>(
+                    builder: (context, state) {
+                      if (state is LiveCatyLoading) {
+                        return const Center(
+                            child: CircularProgressIndicator());
+                      } else if (state is LiveCatySuccess) {
+                        final categories = state.categories;
 
-                  return const Center(
-                    child: Text("Failed to load data..."),
-                  );
-                },
-              ),
+                        List<CategoryModel> searchCaty = keySearch.isEmpty
+                            ? categories
+                            : categories
+                                .where((element) => element.categoryName!
+                                    .toLowerCase()
+                                    .contains(keySearch))
+                                .toList();
+
+                        return GridView.builder(
+                          controller: _hideButtonController,
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 4,
+                            bottom: 80,
+                          ),
+                          itemCount: searchCaty.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 3.8,
+                          ),
+                          itemBuilder: (_, i) {
+                            final model = searchCaty[i];
+
+                            return CardLiveItem(
+                              title: model.categoryName ?? "",
+                              onTap: () {
+                                /// OPEN Channels
+                                Get.to(() => LiveChannelsScreen(
+                                        catyId:
+                                            model.categoryId ?? ''))!
+                                    .then((value) async {
+                                  if (showAds && _interstitialAd != null) {
+                                    await _interstitialAd!.show();
+                                    await _loadIntel();
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        );
+                      }
+
+                      return const Center(
+                        child: Text("Failed to load data..."),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
           AdmobWidget.getBanner(),

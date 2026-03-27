@@ -12,46 +12,97 @@ class CardChannelMovieItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       focusColor: kColorFocus,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: Ink(
         decoration: BoxDecoration(
           color: kColorCardLight,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: image ?? "",
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, i, e) {
-                    return const SizedBox();
-                  },
-                  placeholder: (_, i) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Poster image
+              CachedNetworkImage(
+                imageUrl: image ?? "",
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                errorWidget: (_, i, e) {
+                  return Container(
+                    color: kColorCardLight,
+                    child: const Center(
+                      child: Icon(
+                        FontAwesomeIcons.film,
+                        color: Colors.white24,
+                        size: 30,
+                      ),
+                    ),
+                  );
+                },
+                placeholder: (_, i) {
+                  return Container(
+                    color: kColorCardLight,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Bottom gradient overlay with title
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.92),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
+                  child: Text(
+                    title ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Get.textTheme.titleSmall!.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11.sp,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Text(
-                title ?? 'null',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Get.textTheme.titleLarge,
+              // Heart icon top-left
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    FontAwesomeIcons.heart,
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
